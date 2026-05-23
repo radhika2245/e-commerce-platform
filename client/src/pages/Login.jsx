@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiShield } from 'react-icons/fi';
-import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
@@ -12,7 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login, googleLogin } = useAuth();
+  const { login } = useAuth();
   const { syncCartOnLogin } = useCart();
   const toast = useToast();
   const navigate = useNavigate();
@@ -31,24 +30,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      setLoading(true);
-      await googleLogin(credentialResponse.credential);
-      await syncCartOnLogin();
-      toast('Signed in with Google!', 'success');
-      navigate('/');
-    } catch (err) {
-      toast(err.response?.data?.error || 'Google sign-in failed', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    toast('Google sign-in was cancelled', 'info');
   };
 
   return (
@@ -88,22 +69,6 @@ export default function Login() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div className="auth-divider">
-          <span>or continue with</span>
-        </div>
-
-        <div className="google-btn-wrap">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            theme="filled_black"
-            size="large"
-            shape="pill"
-            width="100%"
-            text="signin_with"
-          />
-        </div>
 
         <div className="auth-security">
           <FiShield /> Protected by 256-bit SSL encryption

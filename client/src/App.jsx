@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ErrorBoundary } from 'react-error-boundary';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider } from './context/AuthContext';
@@ -43,12 +42,9 @@ function Fallback({ error, resetErrorBoundary }) {
   );
 }
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-
 export default function App() {
   return (
     <HelmetProvider>
-      <GoogleOAuthProvider clientId={googleClientId}>
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
@@ -81,7 +77,6 @@ export default function App() {
           </WishlistProvider>
         </CartProvider>
       </AuthProvider>
-      </GoogleOAuthProvider>
     </HelmetProvider>
   );
 }

@@ -11,9 +11,7 @@ const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
-const razorpayRoutes = require('./routes/razorpay');
 const cartRoutes = require('./routes/cart');
-const socialRoutes = require('./routes/social');
 const authRoutes = require('./routes/auth');
 const couponRoutes = require('./routes/coupons');
 
@@ -93,14 +91,6 @@ const authLimiter = rateLimit({
   skipSuccessfulRequests: false,
 });
 
-const authLimiterStrict = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 20,
-  message: { error: 'Too many attempts, try again later' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -118,7 +108,6 @@ const sensitiveLimiter = rateLimit({
 
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/google', authLimiterStrict);
 app.use('/api', apiLimiter);
 app.use('/api/orders', sensitiveLimiter);
 app.use('/api/cart', sensitiveLimiter);
@@ -140,9 +129,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
-app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/auth', socialRoutes);
 app.use('/api/coupons', couponRoutes);
 
 app.use((req, res) => {

@@ -10,7 +10,9 @@ import { useToast } from '../context/ToastContext';
 import axios from 'axios';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
+
+const FREE_SHIPPING_THRESHOLD = 4999;
+const SHIPPING_COST = 499;
 
 function formatINR(n) {
   const str = String(Math.round(n));
@@ -24,17 +26,6 @@ function formatINR(n) {
     r = r.slice(0, -2);
   }
   return chunks.reverse().join(',') + ',' + last3;
-}
-
-function loadRazorpayScript() {
-  return new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true);
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
 }
 
 function StripeForm({ onSuccess }) {
@@ -71,52 +62,13 @@ function StripeForm({ onSuccess }) {
   );
 }
 
-function RazorpayButton({ amount, onSuccess }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handlePayment = async () => {
-    setLoading(true);
-    setError('');
-    const loaded = await loadRazorpayScript();
-    if (!loaded) { setError('Failed to load Razorpay SDK'); setLoading(false); return; }
-    try {
-      const { data } = await axios.post('/api/razorpay/create-order', { amount, currency: 'INR' });
-      const options = {
-        key: RAZORPAY_KEY,
-        amount: data.amount,
-        currency: data.currency,
-        name: 'Nebula Store',
-        description: 'Premium Products',
-        order_id: data.id,
-        handler: (response) => { onSuccess(response.razorpay_payment_id, 'razorpay'); },
-        prefill: { name: 'Customer', email: 'customer@example.com', contact: '9999999999' },
-        theme: { color: '#7ec8e3' },
-        modal: { ondismiss: () => setLoading(false) },
-      };
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', (response) => { setError(response.error.description || 'Payment failed'); setLoading(false); });
-      rzp.open();
-    } catch { setError('Failed to initiate payment'); setLoading(false); }
-  };
-
-  return (
-    <div className="razorpay-section">
-      <button className="btn-primary razorpay-btn" onClick={handlePayment} disabled={loading}>
-        {loading ? 'Opening Razorpay...' : `Pay ₹${formatINR(amount)} via Razorpay`}
-      </button>
-      {error && <p className="error-text" role="alert">{error}</p>}
-    </div>
-  );
-}
-
 export default function Checkout() {
   const { cart, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [clientSecret, setClientSecret] = useState('');
-  const [method, setMethod] = useState('razorpay');
+  const [method, setMethod] = useState('stripe');
   const [couponCode, setCouponCode] = useState('');
   const [coupon, setCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
@@ -128,16 +80,17 @@ export default function Checkout() {
   const [savingAddress, setSavingAddress] = useState(false);
   const [guestInfo, setGuestInfo] = useState({ name: '', email: '', phone: '' });
 
+  const shipping = totalPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
   const discount = coupon ? (totalPrice >= coupon.minOrder ? Math.min(coupon.discount, totalPrice) : 0) : 0;
-  const finalTotal = totalPrice - discount;
+  const finalTotal = totalPrice + shipping - discount;
 
   useEffect(() => {
     if (cart.length === 0) return;
     setClientSecret('');
-    axios.post('/api/payment/create-payment-intent', { amount: totalPrice, currency: 'inr' })
+    axios.post('/api/payment/create-payment-intent', { items: cart, discount, currency: 'inr' })
       .then(res => setClientSecret(res.data.clientSecret))
       .catch(() => toast('Payment system unavailable', 'error'));
-  }, [cart, totalPrice]);
+  }, [cart, totalPrice, discount]);
 
   useEffect(() => {
     if (!user) return;
@@ -327,11 +280,6 @@ export default function Checkout() {
 
       {/* Payment method */}
       <div className="payment-method-selector">
-        <button className={`pm-btn ${method === 'razorpay' ? 'active' : ''}`} onClick={() => setMethod('razorpay')}>
-          <span className="pm-icon"><FiCreditCard /></span>
-          <span className="pm-info"><strong>Razorpay</strong><small>UPI, Card, Net Banking, Wallet</small></span>
-          {method === 'razorpay' && <FiCheck className="pm-check" />}
-        </button>
         <button className={`pm-btn ${method === 'stripe' ? 'active' : ''}`} onClick={() => setMethod('stripe')}>
           <span className="pm-icon"><FiCreditCard /></span>
           <span className="pm-info"><strong>Stripe</strong><small>Credit / Debit Card</small></span>
@@ -356,6 +304,7 @@ export default function Checkout() {
           ))}
           <div className="checkout-total">
             <div className="summary-row"><span>Subtotal</span><span>₹{formatINR(totalPrice)}</span></div>
+            <div className="summary-row"><span>Shipping</span><span>{shipping === 0 ? 'Free' : `₹${formatINR(shipping)}`}</span></div>
             {discount > 0 && <div className="summary-row discount"><span>Discount</span><span>-₹{formatINR(discount)}</span></div>}
             <div className="summary-row total"><strong>Total</strong><strong>₹{formatINR(finalTotal)}</strong></div>
           </div>
@@ -364,9 +313,7 @@ export default function Checkout() {
         <div className="checkout-payment">
           <h3>Payment</h3>
           <div className="payment-security"><FiShield aria-hidden="true" /> Secured with SSL encryption</div>
-          {method === 'razorpay' ? (
-            <RazorpayButton amount={finalTotal} onSuccess={handlePaymentSuccess} />
-          ) : method === 'stripe' ? (
+          {method === 'stripe' ? (
             clientSecret ? (
               <Elements stripe={stripePromise} options={{ clientSecret }}><StripeForm onSuccess={handlePaymentSuccess} /></Elements>
             ) : <div className="loading">Preparing checkout...</div>

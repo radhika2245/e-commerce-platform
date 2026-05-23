@@ -3,11 +3,14 @@ const { v4: uuidv4 } = require('uuid');
 
 const ORDERS_FILE = 'orders.json';
 const PRODUCTS_FILE = 'products.json';
+const COUPONS_FILE = 'coupons.json';
+const FREE_SHIPPING_THRESHOLD = 4999;
+const SHIPPING_COST = 499;
 
 function placeOrder(req, res) {
   const orders = readJSON(ORDERS_FILE);
   const products = readJSON(PRODUCTS_FILE);
-  const { items, customer, paymentId, paymentMethod } = req.body;
+  const { items, customer, paymentId, paymentMethod, couponCode } = req.body;
 
   if (!items || !items.length) {
     return res.status(400).json({ error: 'Items are required' });
@@ -25,7 +28,8 @@ function placeOrder(req, res) {
     return res.status(400).json({ error: 'Invalid customer name' });
   }
 
-  let serverTotal = 0;
+  let serverSubtotal = 0;
+  const orderItems = [];
   for (const item of items) {
     if (!item.id || !item.quantity || item.quantity < 1) {
       return res.status(400).json({ error: 'Each item must have an id and quantity >= 1' });
@@ -40,8 +44,39 @@ function placeOrder(req, res) {
     if (product.stock < item.quantity) {
       return res.status(400).json({ error: `Insufficient stock for ${product.name}` });
     }
-    serverTotal += product.price * item.quantity;
+    
+    const discountedPrice = product.discount ? product.price - Math.round(product.price * product.discount / 100) : product.price;
+    serverSubtotal += discountedPrice * item.quantity;
+    
+    orderItems.push({
+      id: product.id,
+      name: product.name,
+      price: discountedPrice,
+      quantity: parseInt(item.quantity),
+      image: product.image
+    });
   }
+
+  // Validate coupon and calculate discount on server
+  let serverDiscount = 0;
+  if (couponCode) {
+    const coupons = readJSON(COUPONS_FILE);
+    const coupon = coupons.find(c => c.code.toUpperCase() === couponCode.toUpperCase());
+    if (coupon && coupon.active && (serverSubtotal >= coupon.minOrder)) {
+      serverDiscount = coupon.type === 'percentage' 
+        ? Math.round(serverSubtotal * coupon.value / 100) 
+        : coupon.value;
+      if (coupon.type === 'percentage' && coupon.maxDiscount > 0) {
+        serverDiscount = Math.min(serverDiscount, coupon.maxDiscount);
+      }
+      serverDiscount = Math.min(serverDiscount, serverSubtotal);
+    }
+  } else {
+    serverDiscount = Math.min(Math.max(0, parseFloat(req.body.discount) || 0), serverSubtotal);
+  }
+
+  const shipping = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+  const finalTotal = serverSubtotal + shipping - serverDiscount;
 
   for (const item of items) {
     const idx = products.findIndex(p => p.id === item.id);
@@ -54,15 +89,17 @@ function placeOrder(req, res) {
   const now = new Date().toISOString();
   const order = {
     id: uuidv4(),
-    items: items.map(i => ({ id: i.id, name: String(i.name || ''), price: Math.max(0, parseFloat(i.price) || 0), quantity: Math.max(1, parseInt(i.quantity) || 1), image: String(i.image || '') })),
+    items: orderItems,
     customer: { name: String(customer.name), email: String(customer.email), phone: String(customer.phone || ''), address: customer.address || null },
-    total: serverTotal,
-    discount: Math.max(0, parseFloat(req.body.discount) || 0),
-    couponCode: req.body.couponCode ? String(req.body.couponCode).slice(0, 50) : null,
+    subtotal: serverSubtotal,
+    shipping,
+    discount: serverDiscount,
+    total: finalTotal,
+    couponCode: couponCode ? String(couponCode).slice(0, 50) : null,
     status: 'confirmed',
     userId: req.user ? req.user.id : null,
     paymentId: paymentId ? String(paymentId).slice(0, 200) : null,
-    paymentMethod: ['razorpay', 'stripe', 'cod'].includes(paymentMethod) ? paymentMethod : null,
+    paymentMethod: ['stripe', 'cod'].includes(paymentMethod) ? paymentMethod : null,
     timeline: [{ status: 'confirmed', timestamp: now }],
     createdAt: now,
   };

@@ -1,6 +1,6 @@
 # Nebula — E-Commerce Platform
 
-Production-grade Indian e-commerce store built with React + Vite (frontend) and Express (backend). Features 3D visuals, JWT + Google auth, Razorpay/Stripe payments, admin panel, wishlist, and server-synced cart — all backed by JSON file storage.
+Production-grade Indian e-commerce store built with React + Vite (frontend) and Express (backend). Features 3D visuals, JWT auth, Stripe payments, admin panel, wishlist, and server-synced cart — all backed by JSON file storage.
 
 ---
 
@@ -8,12 +8,10 @@ Production-grade Indian e-commerce store built with React + Vite (frontend) and 
 
 | Layer       | Technology                                                           |
 |-------------|----------------------------------------------------------------------|
-| Frontend    | React 18, Vite 5, React Router 6, Axios, Three.js, react-helmet-async, react-icons, react-error-boundary, Stripe.js, @react-oauth/google |
-| Backend     | Express 4, bcryptjs, JWT, helmet, compression, morgan, express-rate-limit, hpp, express-async-errors, google-auth-library, stripe, razorpay, uuid |
 | 3D Graphics | @react-three/fiber, @react-three/drei, Three.js                    |
 | Storage     | JSON files (`server/src/data/`)                                     |
-| Auth        | JWT (Bearer token in localStorage) + Google OAuth (ID token)        |
-| Payments    | Razorpay (primary, Indian market) + Stripe (fallback)               |
+| Auth        | JWT (Bearer token in localStorage)         |
+| Payments    | Stripe (primary)               |
 
 ---
 
@@ -31,10 +29,8 @@ npm run install:all
 
 # 2. Configure environment
 cp server/.env.example server/.env
-# Edit server/.env — set JWT_SECRET, GOOGLE_CLIENT_ID, etc.
 
 # 3. Set client env
-# Edit client/.env — set VITE_GOOGLE_CLIENT_ID, VITE_RAZORPAY_KEY_ID
 
 # 4. Run both server + client in dev mode
 npm run dev
@@ -108,21 +104,17 @@ caliculater/
         │   └── auth.js           # JWT token generation & verification
         ├── routes/               # Express routers
         │   ├── auth.js           # POST /register, /login; GET/PUT /profile; PUT /password
-        │   ├── social.js         # POST /google
         │   ├── products.js       # GET /, /brands, /:id
         │   ├── orders.js         # POST /, GET /, GET /:id
         │   ├── cart.js           # GET /, PUT /
         │   ├── admin.js          # GET /dashboard, /orders; CRUD products
         │   ├── payment.js        # POST /create-payment-intent (Stripe)
-        │   └── razorpay.js       # POST /create-order, /verify
         ├── controllers/          # Route handlers
         │   ├── authController.js
-        │   ├── googleAuthController.js
         │   ├── productController.js
         │   ├── orderController.js
         │   ├── adminController.js
         │   ├── paymentController.js
-        │   └── razorpayController.js
         └── data/                 # JSON file storage
             ├── products.json     # 30 products
             ├── users.json        # Registered users
@@ -173,11 +165,9 @@ The server is a standard Express app with layered middleware:
 | GET    | /profile    | JWT      | `authController.getProfile` | Returns user profile           |
 | PUT    | /profile    | JWT      | `authController.updateProfile` | Updates name               |
 | PUT    | /password   | JWT      | `authController.changePassword` | Changes password           |
-| POST   | /google     | No       | `googleAuthController.googleLogin` | Google ID token auth    |
 
 **Password rules**: min 8 chars, must have uppercase, lowercase, and a number. Validated server-side.
 
-**Google auth flow**: Client sends ID token → server verifies with `google-auth-library` → finds or creates user by email → links `googleId` → updates Google avatar → returns JWT.
 
 #### Products (`/api/products`)
 
@@ -247,11 +237,9 @@ All routes require JWT + `role: 'admin'`.
 
 #### Payments
 
-**Razorpay** (`/api/razorpay`)
 
 | Method | Endpoint     | Auth | Description |
 |--------|--------------|------|-------------|
-| POST   | /create-order | No  | Creates Razorpay order (amount in paise) |
 | POST   | /verify      | No   | HMAC-SHA256 signature verification |
 
 **Stripe** (`/api/payment`)
@@ -274,7 +262,6 @@ Renders `<App />` inside `<BrowserRouter>` and `<React.StrictMode>`. Imports `Ap
 
 ```
 HelmetProvider
-  → GoogleOAuthProvider
     → AuthProvider
       → CartProvider
         → WishlistProvider
@@ -316,7 +303,6 @@ Each page is lazy-loaded (dynamic `import()`). Wrapped in `PageWrapper` (which c
 | `loading`      | `boolean`  | True while restoring session       |
 | `login()`      | `fn`       | Email/password login               |
 | `register()`   | `fn`       | Name/email/password registration   |
-| `googleLogin()`| `fn`       | Google credential token login      |
 | `logout()`     | `fn`       | Clears localStorage, resets state  |
 
 **Session persistence**: Token + user object stored in `localStorage` under `nebula_token` / `nebula_user`. Restored on mount. Axios `Authorization` header set globally.
@@ -479,8 +465,6 @@ Interactive 3D scene using Three.js (lazy-loaded only on Home page).
 
 #### Checkout (`pages/Checkout.jsx`)
 
-- Payment method selector: Razorpay / Stripe tabs
-- **Razorpay**: Loads SDK dynamically, creates order via `/api/razorpay/create-order`, opens Razorpay checkout modal, verifies client-side
 - **Stripe**: Fetches client secret via `/api/payment/create-payment-intent`, renders `PaymentElement`, handles confirm
 - Order summary sidebar
 - On success: places order via `POST /api/orders`, clears cart, redirects to products
@@ -493,7 +477,6 @@ Interactive 3D scene using Three.js (lazy-loaded only on Home page).
 
 #### Profile (`pages/Profile.jsx`)
 
-- Sidebar: avatar (Google picture or icon), name, email, "Member" badge, anchor nav (Account Details, Change Password, Order History), Sign Out button
 - **Account Details**: edit name (persisted via `PUT /api/auth/profile`), email (read-only)
 - **Change Password**: current + new password via `PUT /api/auth/password`
 - **Recent Orders**: last 5 orders, link to full order history
@@ -508,7 +491,6 @@ Interactive 3D scene using Three.js (lazy-loaded only on Home page).
 #### Login (`pages/Login.jsx`)
 
 - Email + password form with show/hide password toggle
-- Google Sign-In button (via `@react-oauth/google`)
 - Auth divider "or continue with"
 - SSL badge
 - Footer link to Register
@@ -577,13 +559,11 @@ Fields: `id` (string), `name`, `description`, `price` (integer INR), `category` 
   "email": "john@example.com",
   "password": "$2b$12$...",
   "role": "customer",
-  "googleId": "12345...",
   "avatar": "https://...",
   "createdAt": "2026-05-22T14:21:34.515Z"
 }
 ```
 
-`googleId` and `avatar` present only for Google-authenticated users. Role is `customer` or `admin`.
 
 ### Order (`orders.json`)
 
@@ -627,10 +607,7 @@ One document per user, items are sanitized on PUT.
 | `PORT`              | No       | Server port (default: 5000)            |
 | `NODE_ENV`          | No       | `development` or `production`          |
 | `JWT_SECRET`        | **Yes**  | Strong random string for token signing |
-| `GOOGLE_CLIENT_ID`  | No       | Google OAuth client ID (for Google sign-in) |
 | `STRIPE_SECRET_KEY` | No       | Stripe secret key (for Stripe payments) |
-| `RAZORPAY_KEY_ID`   | No       | Razorpay key ID (for Razorpay payments) |
-| `RAZORPAY_KEY_SECRET` | No     | Razorpay key secret                     |
 | `CLIENT_URL`        | No       | Frontend URL for CORS (default: `http://localhost:5173`) |
 
 ### Client (`client/.env`)
@@ -639,8 +616,6 @@ One document per user, items are sanitized on PUT.
 |-------------------------------|-------------------------------------|
 | `VITE_API_URL`                | API base URL (default: `http://localhost:5000`) |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key              |
-| `VITE_RAZORPAY_KEY_ID`       | Razorpay key ID                     |
-| `VITE_GOOGLE_CLIENT_ID`      | Google OAuth client ID (must match server) |
 
 ---
 
@@ -670,11 +645,9 @@ One document per user, items are sanitized on PUT.
 - [x] Shopping cart with localStorage + server sync
 - [x] Wishlist (localStorage only)
 - [x] User registration + login (email/password)
-- [x] Google Sign-In
 - [x] Profile management (edit name, change password)
 - [x] Order placement + order history
 - [x] Admin dashboard (stats, CRUD products, order management)
-- [x] Razorpay payments (UPI, Card, Net Banking, Wallet)
 - [x] Stripe payments (Credit/Debit Card)
 - [x] Dark theme with glassmorphic UI
 - [x] 3D animated hero scene (Three.js)
@@ -696,7 +669,6 @@ One document per user, items are sanitized on PUT.
 
 ### Payment keys
 
-- Razorpay is the primary payment method (Indian market optimized)
 - Stripe is the fallback
 - Both require real API keys in production
 - Keys are placeholders in `.env` by default
@@ -708,4 +680,3 @@ One document per user, items are sanitized on PUT.
 3. Product image upload (not external URL)
 4. Email confirmation on order placement
 5. Order confirmation page (not redirect to `/products`)
-6. Real Stripe/Razorpay keys for production payments

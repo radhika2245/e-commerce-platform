@@ -45,12 +45,6 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const googleLogin = async (credential) => {
-    const { data } = await axios.post('/api/auth/google', { credential });
-    setAuth(data);
-    return data;
-  };
-
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -59,7 +53,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
