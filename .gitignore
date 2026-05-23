@@ -7,9 +7,6 @@ build/
 .env.local
 .env.production
 
-# Server data directory (runtime user data)
-server/src/data/
-
 # IDE / editor
 .vscode/
 .idea/

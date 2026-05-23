@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1acacfc4-3117-4399-9d1d-f87fc57d7182",
+    "name": "mohan",
+    "email": "mr999999sharma@gmail.com",
+    "password": "$2b$12$0G24JQLWFH6Fj/7Y7PExMeW/U9THvnibF9ILL0wo.6ywR9e1TuANm",
+    "role": "customer",
+    "createdAt": "2026-05-22T14:21:34.515Z"
+  },
+  {
+    "id": "e023cd1c-4ac0-4eeb-9f8a-c4ca0e7b06d8",
+    "name": "Updated User",
+    "email": "test@test.com",
+    "password": "$2b$12$Ie1/EJzh9twUkB15Js6baOXSC/sSS9KQL6CgbabquVsqzUmK2ODtC",
+    "role": "customer",
+    "createdAt": "2026-05-22T15:03:22.034Z"
+  },
+  {
+    "id": "13a6a10b-f688-44b7-b394-e4a58003708e",
+    "name": "ankit",
+    "email": "ankitxydv@gmail.com",
+    "password": "$2b$12$dtGl4kdNYBEV3voM9kTkSeFsfG3pQWlNYuyuX1yRokMY6T3MKkzQq",
+    "role": "customer",
+    "createdAt": "2026-05-23T18:29:12.107Z"
+  }
+]

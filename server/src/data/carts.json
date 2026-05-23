@@ -1,0 +1,49 @@
+[
+  {
+    "userId": "e023cd1c-4ac0-4eeb-9f8a-c4ca0e7b06d8",
+    "items": [
+      {
+        "id": "p1",
+        "name": "Test",
+        "price": 100,
+        "quantity": 2,
+        "image": "",
+        "brand": "",
+        "description": ""
+      }
+    ],
+    "createdAt": "2026-05-22T15:10:09.617Z",
+    "updatedAt": "2026-05-22T15:10:09.617Z"
+  },
+  {
+    "userId": "1acacfc4-3117-4399-9d1d-f87fc57d7182",
+    "items": [
+      {
+        "id": "p1",
+        "name": "Quantum Wireless Headphones",
+        "price": 349.99,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80",
+        "brand": "",
+        "description": "Premium noise-cancelling headphones with spatial audio and 40-hour battery life. Features adaptive EQ that learns your listening preferences in real time."
+      },
+      {
+        "id": "p29",
+        "name": "Analog Minimalist Watch",
+        "price": 20999,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&q=80",
+        "brand": "VisionAir",
+        "description": "Japanese quartz movement in a 40mm stainless steel case. Sapphire crystal, mesh bracelet. Ultra-thin 7mm profile. Water resistant to 50m."
+      }
+    ],
+    "createdAt": "2026-05-22T15:16:54.464Z",
+    "updatedAt": "2026-05-22T15:30:20.350Z"
+  },
+  {
+    "userId": "13a6a10b-f688-44b7-b394-e4a58003708e",
+    "items": [],
+    "createdAt": "2026-05-23T22:12:20.567Z",
+    "updatedAt": "2026-05-23T23:03:06.295Z"
+  }
+]
