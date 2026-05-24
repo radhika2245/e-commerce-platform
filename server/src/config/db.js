@@ -3,17 +3,30 @@ const path = require('path');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
 function readJSON(file) {
   const p = path.join(DATA_DIR, file);
   if (!fs.existsSync(p)) {
-    fs.writeFileSync(p, '[]', 'utf-8');
+    try {
+      fs.writeFileSync(p, '[]', 'utf-8');
+    } catch (err) {
+      console.error(`[DB] Failed to create ${file}:`, err.message);
+    }
     return [];
   }
   try {
-    return JSON.parse(fs.readFileSync(p, 'utf-8'));
+    const data = JSON.parse(fs.readFileSync(p, 'utf-8'));
+    return Array.isArray(data) ? data : [];
   } catch (err) {
-    console.error(`[DB] Failed to parse ${file}, resetting to empty:`, err.message);
-    fs.writeFileSync(p, '[]', 'utf-8');
+    console.error(`[DB] Failed to parse ${file}, resetting to empty array:`, err.message);
+    try {
+      fs.writeFileSync(p, '[]', 'utf-8');
+    } catch (writeErr) {
+      console.error(`[DB] Failed to reset ${file}:`, writeErr.message);
+    }
     return [];
   }
 }

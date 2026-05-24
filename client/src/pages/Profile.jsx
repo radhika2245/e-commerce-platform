@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import formatINR from '../utils/formatINR';
-import axios from 'axios';
+import api from '../api/axios';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -28,9 +28,15 @@ export default function Profile() {
 
   useEffect(() => {
     if (!user) return;
-    axios.get('/api/orders')
-      .then(res => setOrders(res.data.slice(0, 5)))
-      .catch(() => {})
+    api.get('/api/orders')
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setOrders(res.data.slice(0, 5));
+        } else {
+          setOrders([]);
+        }
+      })
+      .catch(() => setOrders([]))
       .finally(() => setOrdersLoading(false));
   }, [user]);
 
@@ -42,10 +48,7 @@ export default function Profile() {
     }
     setSaving(true);
     try {
-      const token = localStorage.getItem('nebula_token');
-      await axios.put('/api/auth/profile', { name }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put('/api/auth/profile', { name });
       toast('Profile updated', 'success');
       const stored = JSON.parse(localStorage.getItem('nebula_user') || '{}');
       stored.name = name;
@@ -70,10 +73,7 @@ export default function Profile() {
     }
     setSaving(true);
     try {
-      const token = localStorage.getItem('nebula_token');
-      await axios.put('/api/auth/password', { currentPassword, newPassword }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put('/api/auth/password', { currentPassword, newPassword });
       toast('Password changed', 'success');
       setCurrentPassword('');
       setNewPassword('');
@@ -208,7 +208,7 @@ export default function Profile() {
               <div className="skeleton-list" style={{ padding: 0 }}>
                 {[1,2,3].map(i => <div key={i} className="skeleton-order" style={{ height: 80 }} />)}
               </div>
-            ) : orders.length === 0 ? (
+            ) : !Array.isArray(orders) || orders.length === 0 ? (
               <div className="profile-empty">
                 <p>No orders yet.</p>
                 <Link to="/products" className="btn-secondary">Start Shopping</Link>

@@ -17,8 +17,10 @@ export default function Wishlist() {
   };
 
   const moveAllToCart = () => {
-    wishlist.forEach(p => addItem(p));
-    toast('All items moved to cart', 'success');
+    if (Array.isArray(wishlist)) {
+      wishlist.forEach(p => addItem(p));
+      toast('All items moved to cart', 'success');
+    }
   };
 
   return (
@@ -31,16 +33,16 @@ export default function Wishlist() {
       <div className="page-header wishlist-header">
         <div>
           <h1>My Wishlist</h1>
-          <p>{wishlist.length} items saved</p>
+          <p>{Array.isArray(wishlist) ? wishlist.length : 0} items saved</p>
         </div>
-        {wishlist.length > 0 && (
+        {Array.isArray(wishlist) && wishlist.length > 0 && (
           <button className="btn-primary" onClick={moveAllToCart}>
             <FiShoppingCart size={16} /> Move All to Cart
           </button>
         )}
       </div>
 
-      {wishlist.length === 0 ? (
+      {!Array.isArray(wishlist) || wishlist.length === 0 ? (
         <div className="empty-state">
           <FiHeart size={48} />
           <h3>Your wishlist is empty</h3>

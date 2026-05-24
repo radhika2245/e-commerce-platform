@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { FiEdit2, FiTrash2, FiPackage, FiDollarSign, FiShoppingBag, FiAlertTriangle, FiTag } from 'react-icons/fi';
 import { useToast } from '../context/ToastContext';
-import axios from 'axios';
+import api from '../api/axios';
 
 function formatINR(n) {
   const str = String(Math.round(n));
@@ -33,24 +33,21 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
-  const token = () => localStorage.getItem('nebula_token');
-  const authHeaders = () => ({ headers: { Authorization: `Bearer ${token()}` } });
-
   useEffect(() => {
-    axios.get('/api/admin/dashboard', authHeaders())
+    api.get('/api/admin/dashboard')
       .then(r => setDashboard(r.data))
       .catch(() => toast('Failed to load dashboard', 'error'))
       .finally(() => setLoading(prev => ({ ...prev, dashboard: false })));
-    axios.get('/api/products')
-      .then(r => setProducts(r.data))
+    api.get('/api/products')
+      .then(r => setProducts(Array.isArray(r.data) ? r.data : []))
       .catch(() => toast('Failed to load products', 'error'))
       .finally(() => setLoading(prev => ({ ...prev, products: false })));
-    axios.get('/api/admin/orders', authHeaders())
-      .then(r => setOrders(r.data))
+    api.get('/api/admin/orders')
+      .then(r => setOrders(Array.isArray(r.data) ? r.data : []))
       .catch(() => toast('Failed to load orders', 'error'))
       .finally(() => setLoading(prev => ({ ...prev, orders: false })));
-    axios.get('/api/admin/coupons', authHeaders())
-      .then(r => setCoupons(r.data))
+    api.get('/api/admin/coupons')
+      .then(r => setCoupons(Array.isArray(r.data) ? r.data : []))
       .catch(() => toast('Failed to load coupons', 'error'))
       .finally(() => setLoading(prev => ({ ...prev, coupons: false })));
   }, []);
@@ -68,7 +65,7 @@ export default function Admin() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/admin/products/${id}`, authHeaders());
+      await api.delete(`/api/admin/products/${id}`);
       setProducts(prev => prev.filter(p => p.id !== id));
       toast('Product deleted', 'success');
     } catch { toast('Failed to delete product', 'error'); }
@@ -80,11 +77,11 @@ export default function Admin() {
     const payload = { ...form, price: parseFloat(form.price), stock: parseInt(form.stock) || 0 };
     try {
       if (editing) {
-        const { data } = await axios.put(`/api/admin/products/${editing}`, payload, authHeaders());
+        const { data } = await api.put(`/api/admin/products/${editing}`, payload);
         setProducts(prev => prev.map(p => p.id === editing ? data : p));
         toast('Product updated', 'success');
       } else {
-        const { data } = await axios.post('/api/admin/products', payload, authHeaders());
+        const { data } = await api.post('/api/admin/products', payload);
         setProducts(prev => [data, ...prev]);
         toast('Product created', 'success');
       }
@@ -96,7 +93,7 @@ export default function Admin() {
 
   const handleStatus = async (id, status) => {
     try {
-      await axios.put(`/api/admin/orders/${id}/status`, { status }, authHeaders());
+      await api.put(`/api/admin/orders/${id}/status`, { status });
       setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
       toast('Order status updated', 'success');
     } catch { toast('Failed to update status', 'error'); }
@@ -106,13 +103,13 @@ export default function Admin() {
     if (!couponForm.code || !couponForm.value) { toast('Code and value are required', 'error'); return; }
     setSaving(true);
     try {
-      const { data } = await axios.post('/api/admin/coupons', {
+      const { data } = await api.post('/api/admin/coupons', {
         ...couponForm,
         value: parseFloat(couponForm.value),
         minOrder: parseFloat(couponForm.minOrder) || 0,
         maxDiscount: parseFloat(couponForm.maxDiscount) || 0,
         usageLimit: parseInt(couponForm.usageLimit) || 0,
-      }, authHeaders());
+      });
       setCoupons(prev => [data, ...prev]);
       resetCouponForm();
       toast('Coupon created!', 'success');
@@ -122,7 +119,7 @@ export default function Admin() {
 
   const handleToggleCoupon = async (c) => {
     try {
-      const { data } = await axios.put(`/api/admin/coupons/${c.id}`, { active: !c.active }, authHeaders());
+      const { data } = await api.put(`/api/admin/coupons/${c.id}`, { active: !c.active });
       setCoupons(prev => prev.map(cp => cp.id === c.id ? data : cp));
       toast(data.active ? 'Coupon activated' : 'Coupon deactivated', 'success');
     } catch { toast('Failed to update coupon', 'error'); }
@@ -187,7 +184,7 @@ export default function Admin() {
               <table className="admin-table">
                 <thead><tr><th>Name</th><th>Price</th><th>Category</th><th>Stock</th><th>Actions</th></tr></thead>
                 <tbody>
-                  {products.map(p => (
+                  {Array.isArray(products) && products.map(p => (
                     <tr key={p.id}>
                       <td>{p.name}</td>
                       <td>₹{formatINR(p.price)}</td>
@@ -201,6 +198,7 @@ export default function Admin() {
                   ))}
                 </tbody>
               </table>
+              {(!Array.isArray(products) || products.length === 0) && <p className="text-secondary" style={{ textAlign: 'center', padding: 20 }}>No products available.</p>}
             </div>
           )}
         </div>
@@ -214,7 +212,7 @@ export default function Admin() {
             <table className="admin-table">
               <thead><tr><th>Order ID</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Customer</th></tr></thead>
               <tbody>
-                {orders.map(o => (
+                {Array.isArray(orders) && orders.map(o => (
                   <tr key={o.id}>
                     <td className="order-id">{o.id.slice(0, 8)}...</td>
                     <td>{o.items?.length || 0}</td>
@@ -230,6 +228,7 @@ export default function Admin() {
                 ))}
               </tbody>
             </table>
+            {(!Array.isArray(orders) || orders.length === 0) && <p className="text-secondary" style={{ textAlign: 'center', padding: 20 }}>No orders available.</p>}
           </div>
         )
       )}
@@ -264,7 +263,7 @@ export default function Admin() {
               <table className="admin-table">
                 <thead><tr><th>Code</th><th>Discount</th><th>Min Order</th><th>Used</th><th>Expires</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
-                  {coupons.map(c => (
+                  {Array.isArray(coupons) && coupons.map(c => (
                     <tr key={c.id}>
                       <td><strong>{c.code}</strong></td>
                       <td>{c.type === 'percentage' ? `${c.value}%` : `₹${formatINR(c.value)}`}</td>
@@ -281,6 +280,7 @@ export default function Admin() {
                   ))}
                 </tbody>
               </table>
+              {(!Array.isArray(coupons) || coupons.length === 0) && <p className="text-secondary" style={{ textAlign: 'center', padding: 20 }}>No coupons available.</p>}
             </div>
           )}
         </div>

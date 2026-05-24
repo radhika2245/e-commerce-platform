@@ -7,7 +7,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { FiCreditCard, FiShield, FiCheck, FiTruck, FiTag, FiPlus, FiMapPin } from 'react-icons/fi';
 import { useToast } from '../context/ToastContext';
-import axios from 'axios';
+import api from '../api/axios';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -31,7 +31,6 @@ function formatINR(n) {
 function StripeForm({ onSuccess }) {
   const stripe = useStripe();
   const elements = useElements();
-  const toast = useToast();
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
 
@@ -85,22 +84,23 @@ export default function Checkout() {
   const finalTotal = totalPrice + shipping - discount;
 
   useEffect(() => {
-    if (cart.length === 0) return;
+    if (!Array.isArray(cart) || cart.length === 0) return;
     setClientSecret('');
-    axios.post('/api/payment/create-payment-intent', { items: cart, discount, currency: 'inr' })
+    api.post('/api/payment/create-payment-intent', { items: cart, discount, currency: 'inr' })
       .then(res => setClientSecret(res.data.clientSecret))
       .catch(() => toast('Payment system unavailable', 'error'));
   }, [cart, totalPrice, discount]);
 
   useEffect(() => {
     if (!user) return;
-    axios.get('/api/auth/addresses', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('nebula_token')}` }
-    }).then(res => {
-      setAddresses(res.data);
-      const def = res.data.find(a => a.isDefault);
-      if (def) setSelectedAddress(def);
-    }).catch(() => {});
+    api.get('/api/auth/addresses')
+      .then(res => {
+        const addrList = Array.isArray(res.data) ? res.data : [];
+        setAddresses(addrList);
+        const def = addrList.find(a => a.isDefault);
+        if (def) setSelectedAddress(def);
+        else if (addrList.length > 0) setSelectedAddress(addrList[0]);
+      }).catch(() => {});
   }, [user]);
 
   const handleApplyCoupon = async () => {
@@ -108,7 +108,7 @@ export default function Checkout() {
     setCheckingCoupon(true);
     setCouponError('');
     try {
-      const { data } = await axios.post('/api/coupons/validate', { code: couponCode, orderTotal: totalPrice });
+      const { data } = await api.post('/api/coupons/validate', { code: couponCode, orderTotal: totalPrice });
       setCoupon(data);
       toast('Coupon applied!', 'success');
     } catch (err) {
@@ -123,10 +123,8 @@ export default function Checkout() {
     e.preventDefault();
     setSavingAddress(true);
     try {
-      const { data } = await axios.post('/api/auth/addresses', addressForm, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('nebula_token')}` }
-      });
-      setAddresses(prev => [...prev, data]);
+      const { data } = await api.post('/api/auth/addresses', addressForm);
+      setAddresses(prev => [...(Array.isArray(prev) ? prev : []), data]);
       setSelectedAddress(data);
       setShowAddressForm(false);
       toast('Address added', 'success');
@@ -151,15 +149,13 @@ export default function Checkout() {
     };
     if (selectedAddress) orderPayload.customer.address = selectedAddress;
     try {
-      await axios.post('/api/orders', orderPayload, user ? {
-        headers: { Authorization: `Bearer ${localStorage.getItem('nebula_token')}` }
-      } : {});
+      await api.post('/api/orders', orderPayload);
       if (coupon?.coupon?.id) {
-        await axios.post(`/api/coupons/${coupon.coupon.id}/use`);
+        await api.post(`/api/coupons/${coupon.coupon.id}/use`);
       }
       clearCart();
       toast('Order placed successfully!', 'success');
-      navigate('/products');
+      navigate('/orders');
     } catch (err) {
       toast(err.response?.data?.error || 'Order creation failed', 'error');
     }
@@ -175,7 +171,7 @@ export default function Checkout() {
     await placeOrder(null, 'cod');
   };
 
-  if (cart.length === 0) {
+  if (!Array.isArray(cart) || cart.length === 0) {
     return (
       <div className="page checkout-page">
         <Helmet><title>Checkout - Nebula</title></Helmet>
@@ -208,11 +204,11 @@ export default function Checkout() {
       {user && (
         <div className="checkout-section">
           <h3><FiMapPin size={18} /> Delivery Address</h3>
-          {addresses.length === 0 && !showAddressForm && (
+          {(!Array.isArray(addresses) || addresses.length === 0) && !showAddressForm && (
             <p className="text-secondary" style={{ marginBottom: 12 }}>No saved addresses.</p>
           )}
           <div className="address-list">
-            {addresses.map(addr => (
+            {Array.isArray(addresses) && addresses.map(addr => (
               <button
                 key={addr.id}
                 className={`address-card ${selectedAddress?.id === addr.id ? 'active' : ''}`}
@@ -295,7 +291,7 @@ export default function Checkout() {
       <div className="checkout-layout">
         <div className="checkout-order-review">
           <h3>Order Summary</h3>
-          {cart.map(item => (
+          {Array.isArray(cart) && cart.map(item => (
             <div key={item.id} className="checkout-item">
               <img src={item.image} alt={item.name} />
               <div><h4>{item.name}</h4><p>Qty: {item.quantity}</p></div>

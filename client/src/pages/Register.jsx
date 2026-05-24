@@ -27,6 +27,8 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email || !password) { toast('Please fill all fields', 'error'); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) { toast('Invalid email format', 'error'); return; }
     if (!checks.every(c => c.pass)) { toast('Password does not meet requirements', 'error'); return; }
     setLoading(true);
     try {
@@ -86,7 +88,7 @@ export default function Register() {
           </div>
           {password && (
             <div className="password-checks">
-              {checks.map(c => (
+              {Array.isArray(checks) && checks.map(c => (
                 <span key={c.label} className={`pw-check ${c.pass ? 'valid' : ''}`}>
                   <FiCheck size={12} /> {c.label}
                 </span>

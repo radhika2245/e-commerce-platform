@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 
 const CartContext = createContext();
 const STORAGE_KEY = 'nebula_cart';
@@ -16,7 +16,7 @@ function loadCart() {
 function cartReducer(state, action) {
   switch (action.type) {
     case 'SET_CART':
-      return action.cart;
+      return Array.isArray(action.cart) ? action.cart : [];
     case 'ADD_ITEM': {
       const existing = state.find(item => item.id === action.product.id);
       if (existing) {
@@ -48,31 +48,21 @@ export function CartProvider({ children }) {
   const token = useRef(typeof window !== 'undefined' ? localStorage.getItem('nebula_token') : null);
   const syncing = useRef(false);
 
-  const getAuthToken = () => {
-    try { return localStorage.getItem('nebula_token'); } catch { return null; }
-  };
-
   const saveToServer = useCallback(async (items) => {
-    const t = getAuthToken();
+    const t = localStorage.getItem('nebula_token');
     if (!t) return;
     try {
-      await axios.put('/api/cart', { items }, {
-        headers: { Authorization: `Bearer ${t}` },
-        timeout: 5000,
-      });
+      await api.put('/api/cart', { items }, { timeout: 5000 });
     } catch {}
   }, []);
 
   const loadFromServer = useCallback(async () => {
-    const t = getAuthToken();
+    const t = localStorage.getItem('nebula_token');
     if (!t || syncing.current) return null;
     syncing.current = true;
     try {
-      const res = await axios.get('/api/cart', {
-        headers: { Authorization: `Bearer ${t}` },
-        timeout: 5000,
-      });
-      return res.data;
+      const res = await api.get('/api/cart', { timeout: 5000 });
+      return Array.isArray(res.data) ? res.data : [];
     } catch {
       return null;
     } finally {
@@ -81,13 +71,13 @@ export function CartProvider({ children }) {
   }, []);
 
   const syncCartOnLogin = useCallback(async () => {
-    const t = getAuthToken();
+    const t = localStorage.getItem('nebula_token');
     if (!t) return;
     token.current = t;
     const localCart = loadCart();
     const serverCart = await loadFromServer();
 
-    if (serverCart && serverCart.length > 0) {
+    if (Array.isArray(serverCart) && serverCart.length > 0) {
       const merged = [...serverCart];
       for (const local of localCart) {
         const existing = merged.find(m => m.id === local.id);
@@ -105,17 +95,17 @@ export function CartProvider({ children }) {
   }, [loadFromServer, saveToServer]);
 
   useEffect(() => {
-    const t = getAuthToken();
+    const t = localStorage.getItem('nebula_token');
     if (t && !token.current) {
       token.current = t;
       syncCartOnLogin();
     } else if (!t) {
       token.current = null;
     }
-  }, []);
+  }, [syncCartOnLogin]);
 
   useEffect(() => {
-    const t = getAuthToken();
+    const t = localStorage.getItem('nebula_token');
     if (t) {
       saveToServer(cart);
     }
@@ -132,22 +122,24 @@ export function CartProvider({ children }) {
   const updateQuantity = (id, quantity) => dispatch({ type: 'UPDATE_QUANTITY', id, quantity });
   const clearCart = () => dispatch({ type: 'CLEAR_CART' });
 
-  const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
-  const totalPrice = cart.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
+  const totalItems = Array.isArray(cart) ? cart.reduce((sum, item) => sum + (item.quantity || 0), 0) : 0;
+  const totalPrice = Array.isArray(cart) ? cart.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0) : 0;
 
   const validatedRef = useRef(false);
 
   const validateCart = useCallback(async () => {
-    if (validatedRef.current) return;
+    if (validatedRef.current || !Array.isArray(cart) || cart.length === 0) return;
     try {
-      const res = await axios.get('/api/products', { timeout: 5000 });
-      const validIds = new Set(res.data.map(p => p.id));
-      const stale = cart.filter(item => !validIds.has(item.id));
-      if (stale.length > 0) {
-        validatedRef.current = true;
-        stale.forEach(item => dispatch({ type: 'REMOVE_ITEM', id: item.id }));
-      } else {
-        validatedRef.current = true;
+      const res = await api.get('/api/products', { timeout: 5000 });
+      if (Array.isArray(res.data)) {
+        const validIds = new Set(res.data.map(p => p.id));
+        const stale = cart.filter(item => !validIds.has(item.id));
+        if (stale.length > 0) {
+          validatedRef.current = true;
+          stale.forEach(item => dispatch({ type: 'REMOVE_ITEM', id: item.id }));
+        } else {
+          validatedRef.current = true;
+        }
       }
     } catch {
       validatedRef.current = true;
@@ -155,8 +147,8 @@ export function CartProvider({ children }) {
   }, [cart]);
 
   useEffect(() => {
-    if (cart.length > 0 && !validatedRef.current) validateCart();
-  }, []);
+    if (Array.isArray(cart) && cart.length > 0 && !validatedRef.current) validateCart();
+  }, [validateCart, cart]);
 
   return (
     <CartContext.Provider value={{

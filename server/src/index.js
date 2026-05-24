@@ -124,6 +124,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.json({ message: 'Nebula API is running', health: '/api/health' });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);

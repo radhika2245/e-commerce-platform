@@ -5,7 +5,7 @@ import { FiSearch, FiSliders, FiX, FiChevronDown, FiClock } from 'react-icons/fi
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import { useToast } from '../context/ToastContext';
-import axios from 'axios';
+import api from '../api/axios';
 
 const CATEGORIES = ['all', 'electronics', 'clothing', 'accessories', 'sports', 'home'];
 const SORT_OPTIONS = [
@@ -39,10 +39,12 @@ export default function Products() {
   const toast = useToast();
 
   useEffect(() => {
-    axios.get('/api/products')
+    api.get('/api/products')
       .then(res => {
-        const names = [...new Set(res.data.map(p => p.name))].sort().slice(0, 8);
-        setSuggestions(names);
+        if (Array.isArray(res.data)) {
+          const names = [...new Set(res.data.map(p => p.name))].sort().slice(0, 8);
+          setSuggestions(names);
+        }
       })
       .catch(() => {});
   }, []);
@@ -68,8 +70,10 @@ export default function Products() {
   };
 
   useEffect(() => {
-    axios.get('/api/products/brands')
-      .then(res => setBrands(res.data))
+    api.get('/api/products/brands')
+      .then(res => {
+        setBrands(Array.isArray(res.data) ? res.data : []);
+      })
       .catch(() => {});
   }, []);
 
@@ -85,8 +89,10 @@ export default function Products() {
       if (priceRange.min) params.minPrice = priceRange.min;
       if (priceRange.max) params.maxPrice = priceRange.max;
 
-      axios.get('/api/products', { params })
-        .then(res => setProducts(res.data))
+      api.get('/api/products', { params })
+        .then(res => {
+          setProducts(Array.isArray(res.data) ? res.data : []);
+        })
         .catch(() => toast('Failed to load products', 'error'))
         .finally(() => setLoading(false));
     }, 300);
@@ -102,7 +108,7 @@ export default function Products() {
 
       <div className="page-header">
         <h1>Products</h1>
-        <p>{products.length} products found</p>
+        <p>{Array.isArray(products) ? products.length : 0} products found</p>
       </div>
 
       <div className="products-toolbar">
@@ -117,7 +123,7 @@ export default function Products() {
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             aria-label="Search products"
           />
-          {showSuggestions && suggestions.length > 0 && !search && (
+          {showSuggestions && Array.isArray(suggestions) && suggestions.length > 0 && !search && (
             <div className="search-suggestions">
               {suggestions.map((s, i) => (
                 <button key={i} className="suggestion-item" onMouseDown={() => { setSearch(s); setShowSuggestions(false); }}>
@@ -194,7 +200,7 @@ export default function Products() {
             </div>
           </div>
 
-          {brands.length > 0 && (
+          {Array.isArray(brands) && brands.length > 0 && (
             <div className="filter-group">
               <h4>Brand</h4>
               <div className="filter-options">
@@ -225,7 +231,7 @@ export default function Products() {
             <div className="product-grid">
               <ProductSkeleton count={6} />
             </div>
-          ) : products.length === 0 ? (
+          ) : !Array.isArray(products) || products.length === 0 ? (
             <div className="empty-state">
               <h3>No products found</h3>
               <p>Try changing your search or filters.</p>
@@ -252,7 +258,7 @@ function RecentlyViewed() {
       setItems(raw ? JSON.parse(raw) : []);
     } catch { setItems([]); }
   }, []);
-  if (items.length === 0) return null;
+  if (!Array.isArray(items) || items.length === 0) return null;
   return (
     <section className="section recently-section" style={{ marginTop: 40 }}>
       <div className="section-header">

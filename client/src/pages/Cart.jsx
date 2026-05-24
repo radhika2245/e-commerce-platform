@@ -15,7 +15,7 @@ export default function Cart() {
   const freeProgress = Math.min((totalPrice / FREE_SHIPPING_THRESHOLD) * 100, 100);
   const remaining = FREE_SHIPPING_THRESHOLD - totalPrice;
 
-  if (cart.length === 0) {
+  if (!Array.isArray(cart) || cart.length === 0) {
     return (
       <div className="page cart-page">
         <Helmet><title>Cart - Nebula</title></Helmet>
@@ -49,7 +49,7 @@ export default function Cart() {
 
       <div className="cart-layout">
         <div className="cart-items">
-          {cart.map(item => <CartItem key={item.id} item={item} />)}
+          {Array.isArray(cart) && cart.map(item => <CartItem key={item.id} item={item} />)}
         </div>
 
         <div className="cart-summary">

@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import formatINR from '../utils/formatINR';
-import axios from 'axios';
+import api from '../api/axios';
 
 function RatingStars({ rating }) {
   const stars = [];
@@ -32,7 +32,7 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setLoading(true);
-    axios.get(`/api/products/${id}`)
+    api.get(`/api/products/${id}`)
       .then(res => {
         setProduct(res.data);
         try {
@@ -42,9 +42,13 @@ export default function ProductDetail() {
           filtered.unshift({ id: res.data.id, name: res.data.name, price: res.data.price, image: res.data.image, rating: res.data.rating, brand: res.data.brand, category: res.data.category, description: res.data.description, stock: res.data.stock, discount: res.data.discount, reviewsCount: res.data.reviewsCount });
           localStorage.setItem('nebula_recently_viewed', JSON.stringify(filtered.slice(0, 10)));
         } catch {}
-        return axios.get(`/api/products?category=${encodeURIComponent(res.data.category)}`);
+        return api.get(`/api/products?category=${encodeURIComponent(res.data.category)}`);
       })
-      .then(res => setRelated(res.data.filter(p => p.id !== id).slice(0, 4)))
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setRelated(res.data.filter(p => p.id !== id).slice(0, 4));
+        }
+      })
       .catch(() => toast('Failed to load product', 'error'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -206,7 +210,7 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {related.length > 0 && (
+      {Array.isArray(related) && related.length > 0 && (
         <section className="section related-section">
           <div className="section-header">
             <h2>Related Products</h2>

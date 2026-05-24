@@ -5,7 +5,7 @@ import { FiArrowRight, FiTruck, FiShield, FiRefreshCw, FiHeadphones } from 'reac
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import ThreeDScene from '../components/ThreeDScene';
-import axios from 'axios';
+import api from '../api/axios';
 
 export default function Home() {
   const [featured, setFeatured] = useState([]);
@@ -15,9 +15,14 @@ export default function Home() {
   const loadProducts = useCallback(() => {
     setLoading(true);
     setError(false);
-    axios.get('/api/products?featured=true')
-      .then(res => setFeatured(res.data))
-      .catch(() => setError(true))
+    api.get('/api/products?featured=true')
+      .then(res => {
+        setFeatured(Array.isArray(res.data) ? res.data : []);
+      })
+      .catch((err) => {
+        console.error('Home load error:', err);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -95,7 +100,11 @@ export default function Home() {
           </div>
         ) : (
           <div className="product-grid">
-            {featured.map(p => <ProductCard key={p.id} product={p} />)}
+            {Array.isArray(featured) && featured.length > 0 ? (
+              featured.map(p => <ProductCard key={p.id} product={p} />)
+            ) : (
+              <p className="text-secondary">No featured products available.</p>
+            )}
           </div>
         )}
       </section>

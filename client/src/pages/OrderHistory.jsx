@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { FiPackage, FiChevronDown, FiChevronUp, FiCheck, FiTruck, FiClock, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import formatINR from '../utils/formatINR';
-import axios from 'axios';
+import api from '../api/axios';
 
 const STATUS_ICONS = {
   confirmed: FiClock,
@@ -27,7 +27,7 @@ const STATUS_COLORS = {
 };
 
 function Timeline({ timeline }) {
-  if (!timeline || timeline.length === 0) return null;
+  if (!Array.isArray(timeline) || timeline.length === 0) return null;
   return (
     <div className="order-timeline">
       {timeline.map((entry, i) => {
@@ -57,8 +57,8 @@ export default function OrderHistory() {
 
   useEffect(() => {
     if (!user) return;
-    axios.get('/api/orders')
-      .then(res => setOrders(res.data))
+    api.get('/api/orders')
+      .then(res => setOrders(Array.isArray(res.data) ? res.data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [user]);
@@ -81,7 +81,7 @@ export default function OrderHistory() {
         <div className="skeleton-list">
           {[1,2,3].map(i => <div key={i} className="skeleton-order" />)}
         </div>
-      ) : orders.length === 0 ? (
+      ) : !Array.isArray(orders) || orders.length === 0 ? (
         <div className="empty-state">
           <FiPackage size={48} />
           <h3>No orders yet</h3>
@@ -100,7 +100,7 @@ export default function OrderHistory() {
                   </span>
                 </div>
                 <div className="order-body">
-                  {order.items?.slice(0, 3).map(item => (
+                  {Array.isArray(order.items) && order.items.slice(0, 3).map(item => (
                     <div key={item.id} className="order-item">
                       <img src={item.image} alt={item.name} />
                       <div>
@@ -109,7 +109,7 @@ export default function OrderHistory() {
                       </div>
                     </div>
                   ))}
-                  {order.items?.length > 3 && (
+                  {Array.isArray(order.items) && order.items.length > 3 && (
                     <div className="order-more">+{order.items.length - 3} more items</div>
                   )}
                 </div>
