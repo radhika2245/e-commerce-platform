@@ -31,7 +31,7 @@ export default function Home() {
   return (
     <div className="page home">
       <Helmet>
-        <title>Nebula - Premium Store India</title>
+        <title>Radhika - Premium Store India</title>
         <meta name="description" content="Discover premium products curated for those who demand the best. Shop electronics, fashion, accessories and more." />
       </Helmet>
 

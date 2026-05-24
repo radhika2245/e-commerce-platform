@@ -45,12 +45,12 @@ export default function Register() {
 
   return (
     <div className="auth-page">
-      <Helmet><title>Create Account - Nebula</title></Helmet>
+      <Helmet><title>Create Account - Radhika</title></Helmet>
       <div className="auth-card">
         <div className="auth-header">
           <span className="brand-icon auth-icon">✦</span>
           <h1>Create Account</h1>
-          <p>Join Nebula today</p>
+          <p>Join Radhika today</p>
         </div>
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">

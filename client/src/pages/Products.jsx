@@ -102,7 +102,7 @@ export default function Products() {
   return (
     <div className="page products-page">
       <Helmet>
-        <title>Products - Nebula</title>
+        <title>Products - Radhika</title>
         <meta name="description" content="Browse our curated collection of premium products with advanced filtering." />
       </Helmet>
 

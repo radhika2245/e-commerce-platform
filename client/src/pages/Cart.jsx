@@ -18,7 +18,7 @@ export default function Cart() {
   if (!Array.isArray(cart) || cart.length === 0) {
     return (
       <div className="page cart-page">
-        <Helmet><title>Cart - Nebula</title></Helmet>
+        <Helmet><title>Cart - Radhika</title></Helmet>
         <div className="empty-cart">
           <FiShoppingBag size={64} />
           <h2>Your cart is empty</h2>
@@ -31,7 +31,7 @@ export default function Cart() {
 
   return (
     <div className="page cart-page">
-      <Helmet><title>{`Cart (${String(totalItems)}) - Nebula`}</title></Helmet>
+      <Helmet><title>{`Cart (${String(totalItems)}) - Radhika`}</title></Helmet>
       <div className="page-header">
         <h1>Shopping Cart</h1>
         <p>{totalItems} {totalItems === 1 ? 'item' : 'items'}</p>

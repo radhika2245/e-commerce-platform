@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-brand">
           <span className="brand-icon" aria-hidden="true">✦</span>
-          <span>Nebula</span>
+          <span>Radhika</span>
         </div>
         <p className="footer-tagline">Premium products for modern living.</p>
         <div className="footer-links">
@@ -17,7 +17,7 @@ export default function Footer() {
           <Link to="/cart">Cart</Link>
           {user?.role === 'admin' && <Link to="/admin">Admin</Link>}
         </div>
-        <p className="footer-copy">&copy; {new Date().getFullYear()} Nebula. All rights reserved.</p>
+        <p className="footer-copy">&copy; {new Date().getFullYear()} Radhika. All rights reserved.</p>
       </div>
     </footer>
   );

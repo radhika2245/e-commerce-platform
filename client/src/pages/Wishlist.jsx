@@ -26,7 +26,7 @@ export default function Wishlist() {
   return (
     <div className="page wishlist-page">
       <Helmet>
-        <title>My Wishlist - Nebula</title>
+        <title>My Wishlist - Radhika</title>
         <meta name="description" content="View and manage your wishlist." />
       </Helmet>
 

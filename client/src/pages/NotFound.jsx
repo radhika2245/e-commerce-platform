@@ -5,7 +5,7 @@ import { FiHome } from 'react-icons/fi';
 export default function NotFound() {
   return (
     <div className="page not-found-page">
-      <Helmet><title>404 - Nebula</title></Helmet>
+      <Helmet><title>404 - Radhika</title></Helmet>
       <div className="not-found-content">
         <span className="not-found-code">404</span>
         <h1>Page Not Found</h1>

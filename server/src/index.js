@@ -119,7 +119,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Nebula API is running', health: '/api/health' });
+  res.json({ message: 'Radhika API is running', health: '/api/health' });
 });
 
 app.use('/api/auth/register', authLimiter);

@@ -68,7 +68,7 @@ export default function OrderHistory() {
   return (
     <div className="page orders-page">
       <Helmet>
-        <title>My Orders - Nebula</title>
+        <title>My Orders - Radhika</title>
         <meta name="description" content="View your order history with tracking." />
       </Helmet>
 

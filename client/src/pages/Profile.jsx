@@ -106,7 +106,7 @@ export default function Profile() {
   return (
     <div className="page profile-page">
       <Helmet>
-        <title>My Profile - Nebula</title>
+        <title>My Profile - Radhika</title>
         <meta name="description" content="Manage your profile, password, and orders." />
       </Helmet>
 

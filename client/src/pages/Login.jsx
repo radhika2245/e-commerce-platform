@@ -34,12 +34,12 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <Helmet><title>Sign In - Nebula</title></Helmet>
+      <Helmet><title>Sign In - Radhika</title></Helmet>
       <div className="auth-card">
         <div className="auth-header">
           <span className="brand-icon auth-icon">✦</span>
           <h1>Welcome Back</h1>
-          <p>Sign in to your Nebula account</p>
+          <p>Sign in to your Radhika account</p>
         </div>
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">

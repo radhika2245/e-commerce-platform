@@ -92,7 +92,7 @@ export default function ProductDetail() {
   return (
     <div className="page product-detail-page">
       <Helmet>
-        <title>{`${String(product.name || 'Product')} - Nebula`}</title>
+        <title>{`${String(product.name || 'Product')} - Radhika`}</title>
         <meta name="description" content={String(product.description || '')} />
       </Helmet>
 

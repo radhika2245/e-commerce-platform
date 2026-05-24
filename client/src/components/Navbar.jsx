@@ -17,9 +17,9 @@ export default function Navbar() {
   return (
     <nav className="navbar" role="navigation" aria-label="Main navigation">
       <div className="navbar-inner">
-        <Link to="/" className="navbar-brand" aria-label="Nebula Home">
+        <Link to="/" className="navbar-brand" aria-label="Radhika Home">
           <span className="brand-icon" aria-hidden="true">✦</span>
-          <span className="brand-text">Nebula</span>
+          <span className="brand-text">Radhika</span>
         </Link>
 
         <button

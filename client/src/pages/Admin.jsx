@@ -127,7 +127,7 @@ export default function Admin() {
 
   return (
     <div className="page admin-page">
-      <Helmet><title>Admin - Nebula</title></Helmet>
+      <Helmet><title>Admin - Radhika</title></Helmet>
       <div className="page-header"><h1>Admin Panel</h1></div>
 
       <div className="admin-tabs" role="tablist">

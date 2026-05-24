@@ -174,7 +174,7 @@ export default function Checkout() {
   if (!Array.isArray(cart) || cart.length === 0) {
     return (
       <div className="page checkout-page">
-        <Helmet><title>Checkout - Nebula</title></Helmet>
+        <Helmet><title>Checkout - Radhika</title></Helmet>
         <div className="empty-state">
           <h2>Your cart is empty</h2>
           <p>Add some items before checking out.</p>
@@ -185,7 +185,7 @@ export default function Checkout() {
 
   return (
     <div className="page checkout-page">
-      <Helmet><title>Checkout - Nebula</title></Helmet>
+      <Helmet><title>Checkout - Radhika</title></Helmet>
       <div className="page-header"><h1>Checkout</h1><p>Complete your purchase</p></div>
 
       {/* Guest info */}
