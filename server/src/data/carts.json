@@ -45,5 +45,21 @@
     "items": [],
     "createdAt": "2026-05-23T22:12:20.567Z",
     "updatedAt": "2026-05-23T23:03:06.295Z"
+  },
+  {
+    "userId": "79f71393-275f-4768-a005-a3f44bf6c7a2",
+    "items": [
+      {
+        "id": "p11",
+        "name": "Ultra-Slim Tablet 12.4\"",
+        "price": 68999,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&q=80",
+        "brand": "Nebula",
+        "description": "AMOLED 120Hz display with 16GB RAM and 512GB storage. S Pen included. Dolby Atmos quad speakers. Productivity meets entertainment."
+      }
+    ],
+    "createdAt": "2026-05-24T01:07:55.617Z",
+    "updatedAt": "2026-05-24T01:07:55.617Z"
   }
 ]

@@ -78,6 +78,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {
     res.set('Cache-Control', 'no-store, must-revalidate');
+    res.set('Content-Type', 'application/json');
   }
   next();
 });
@@ -106,13 +107,6 @@ const sensitiveLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/login', authLimiter);
-app.use('/api', apiLimiter);
-app.use('/api/orders', sensitiveLimiter);
-app.use('/api/cart', sensitiveLimiter);
-app.use('/api/admin', sensitiveLimiter);
-
 app.get('/api/health', (req, res) => {
   const cacheAge = isProduction ? 60 : 0;
   res.set('Cache-Control', `public, max-age=${cacheAge}`);
@@ -128,12 +122,18 @@ app.get('/', (req, res) => {
   res.json({ message: 'Nebula API is running', health: '/api/health' });
 });
 
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/orders', sensitiveLimiter);
 app.use('/api/orders', orderRoutes);
+app.use('/api/cart', sensitiveLimiter);
+app.use('/api/cart', cartRoutes);
+app.use('/api/admin', sensitiveLimiter);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
-app.use('/api/cart', cartRoutes);
 app.use('/api/coupons', couponRoutes);
 
 app.use((req, res) => {

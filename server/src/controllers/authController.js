@@ -59,7 +59,13 @@ async function register(req, res) {
   };
 
   users.push(user);
-  writeJSON(USERS_FILE, users);
+
+  try {
+    writeJSON(USERS_FILE, users);
+  } catch (writeErr) {
+    console.error('[AUTH] Failed to save user:', writeErr.message);
+    return res.status(500).json({ error: 'Registration failed. Please try again.' });
+  }
 
   const token = generateToken(user);
   res.status(201).json({
