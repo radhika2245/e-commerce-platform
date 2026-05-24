@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ===== RESET & BASE ===== */
 *,
 *::before,
@@ -153,6 +157,13 @@ input, textarea, select {
   flex: 1;
   padding-top: 72px;
   animation: fadeIn 0.4s ease;
+}
+
+@media (max-width: 767px) {
+  .main {
+    padding-top: 56px;
+    padding-bottom: 64px;
+  }
 }
 
 .page {
